@@ -205,6 +205,7 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
     '#type' => 'textfield',
     '#default_value' => $settings['linked_field']['destination'],
     '#description' => t('Enter the link destination here. If you need a dynamic destination you can set it via the <a href="@alter-hook">alter hook</a>.', array('@alter-hook' => 'https://github.com/backdrop-contrib/linked_field/wiki')),
+    '#maxlength' => 1024,
     '#states' => array(
       'visible' => array(
         'input[name$="[settings][linked_field][linked]"]' => array('checked' => TRUE),
