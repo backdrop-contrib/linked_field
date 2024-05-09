@@ -270,7 +270,7 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
 
   $settings_form['linked_field']['token'] += array(
     '#type' => 'container',
-    '#theme' => 'token_tree',
+    '#theme' => 'token_tree_link',
     '#token_types' => 'all',
     '#dialog' => TRUE,
   );
