@@ -209,10 +209,8 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
   );
 
   $settings_form['linked_field']['advanced'] = array(
-    '#title' => t('Advanced'),
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
+    '#summary' => t('Advanced link attributes'),
+    '#type' => 'details',
     '#states' => array(
       'visible' => array(
         'input[name$="[settings][linked_field][linked]"]' => array('checked' => TRUE),
