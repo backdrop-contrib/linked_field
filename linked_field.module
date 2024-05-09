@@ -6,16 +6,6 @@
  */
 
 /**
- * Implements hook_help().
- */
-function linked_field_help($path, $arg) {
-  switch ($path) {
-    case 'admin/reports/fields/linked-fields':
-      return '<p>' . t('This list shows all fields which are linked via !linked-field module.', array('!linked-field' => l('Linked Field', 'https://drupal.org/project/linked_field'))) . '</p>';
-  }
-}
-
-/**
  * Implements hook_permission().
  */
 function linked_field_permission() {
@@ -191,7 +181,6 @@ function linked_field_field_formatter_settings_summary_alter(&$summary, $context
  */
 function linked_field_field_formatter_settings_form_alter(&$settings_form, $context) {
   $field = $context['field'];
-  $entity_type = $context['instance']['entity_type'];
   $display = $context['instance']['display'][$context['view_mode']];
   $settings = $display['settings'];
 
@@ -200,7 +189,7 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
     '#attributes' => array('class' => array('linked-field-linked-wrapper')),
     '#attached' => array(
       'css' => array(
-        drupal_get_path('module', 'linked_field') . '/css/linked-field.css',
+        backdrop_get_path('module', 'linked_field') . '/css/linked-field.css',
       ),
     ),
   );
@@ -215,7 +204,7 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
     '#title' => t('Destination'),
     '#type' => 'textfield',
     '#default_value' => $settings['linked_field']['destination'],
-    '#description' => t('Enter the link destination here. If you need a dynamic destination you can set it via the <a href="@alter-hook">alter hook</a>.', array('@alter-hook' => 'http://cgit.drupalcode.org/linked_field/tree/linked_field.api.php')),
+    '#description' => t('Enter the link destination here. If you need a dynamic destination you can set it via the <a href="@alter-hook">alter hook</a>.', array('@alter-hook' => 'https://github.com/backdrop-contrib/linked_field/wiki')),
     '#states' => array(
       'visible' => array(
         'input[name$="[settings][linked_field][linked]"]' => array('checked' => TRUE),
@@ -278,26 +267,12 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
     ),
   );
 
-  // Display a token browser and show a warning to the user if Token
-  // module is not installed.
-  if (module_exists('token')) {
-    $settings_form['linked_field']['token'] += array(
-      '#type' => 'container',
-      '#theme' => 'token_tree',
-      '#token_types' => 'all',
-      '#dialog' => TRUE,
-    );
-  }
-  else {
-    $field_name = drupal_clean_css_identifier($field['field_name']);
-
-    $settings_form['linked_field']['token']['#prefix'] = '<div class="form-item" id="edit-fields-' . $field_name . '-settings-edit-form-settings-linked-field-token">';
-    $settings_form['linked_field']['token']['#prefix'] .= '<div style="display: inline-block;" class="messages warning">';
-    $settings_form['linked_field']['token']['#suffix'] = '</div></div>';
-    $settings_form['linked_field']['token']['#markup'] = t('Install the <a href="@url">Token</a> module to browse available tokens.', array(
-      '@url' => url('https://www.drupal.org/project/token'),
-    ));
-  }
+  $settings_form['linked_field']['token'] += array(
+    '#type' => 'container',
+    '#theme' => 'token_tree',
+    '#token_types' => 'all',
+    '#dialog' => TRUE,
+  );
 }
 
 /**
@@ -348,15 +323,15 @@ function linked_field_field_attach_view_alter(&$output, $context) {
     }
 
     // Some entities don't have a language so we need a fallback.
-    $language = isset($element['#object']->language) ? $element['#object']->language : NULL;
+    $langcode = isset($element['#object']->langcode) ? $element['#object']->langcode : NULL;
     // We need special behavior for Display Suite fields.
     // @TODO: Where does this come from?
     if ($element['#field_type'] != 'ds') {
-      $field_items = field_get_items($element['#entity_type'], $element['#object'], $field_name, $language);
+      $field_items = field_get_items($element['#entity_type'], $element['#object'], $field_name, $langcode);
     }
     foreach (element_children($element) as $delta) {
       // Parse the destination to get queries and fragments working.
-      $destination_parsed = drupal_parse_url($settings['linked_field']['destination']);
+      $destination_parsed = backdrop_parse_url($settings['linked_field']['destination']);
 
       // Generate a correct link.
       $path = $destination_parsed['path'];
@@ -378,7 +353,7 @@ function linked_field_field_attach_view_alter(&$output, $context) {
       );
 
       // Let other modules alter all the settings.
-      drupal_alter('linked_field_settings', $linked_field_settings, $context);
+      backdrop_alter('linked_field_settings', $linked_field_settings, $context);
 
       // If there is no destination or Linked Field is disabled continue.
       if (!$linked_field_settings['path'] || (!$linked_field_settings['linked'] && $linked_field_settings['path'])) {
@@ -401,12 +376,12 @@ function linked_field_field_attach_view_alter(&$output, $context) {
           ),
         ) + $replace_tokens;
       }
-      
+
       $options = array();
-      if ($context['language'] != LANGUAGE_NONE) {
+      if ($context['langcode'] != LANGUAGE_NONE) {
         $languages = language_list();
-        if (isset($languages[$context['language']])) {
-          $options['language'] = $languages[$context['language']];
+        if (isset($languages[$context['langcode']])) {
+          $options['langcode'] = $languages[$context['langcode']];
         }
       }
 
@@ -444,7 +419,7 @@ function linked_field_field_attach_view_alter(&$output, $context) {
       unset($linked_field_settings['path']);
 
       if (!$linked_field_settings['text']) {
-        $rendered = drupal_render($element[$delta]);
+        $rendered = backdrop_render($element[$delta]);
       }
       else {
         $rendered = $linked_field_settings['text'];

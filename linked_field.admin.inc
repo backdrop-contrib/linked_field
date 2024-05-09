@@ -11,51 +11,55 @@
  * @see field_ui_fields_list()
  */
 function linked_field_field_list() {
-  // Get all field config instances from database.
-  $field_config_instances = db_select('field_config_instance', 'fci')->fields('fci')->execute();
+  $instances = field_info_instances();
+  $field_types = field_info_field_types();
+  $bundles = field_info_bundles();
+  $modules = system_rebuild_module_data();
   $linked_fields = array();
 
-  foreach ($field_config_instances as $fci) {
-    $field_name = $fci->field_name;
-    $entity_type = $fci->entity_type;
-    $bundle = $fci->bundle;
-    $data = unserialize($fci->data);
+  $header = array(
+    array('data' => t('Field name'), 'field' => 'field_name', 'sort' => 'asc'),
+    array('data' => t('Linked in')),
+  );
+  $rows = array();
+  foreach ($instances as $entity_type => $type_bundles) {
+    foreach ($type_bundles as $bundle => $bundle_instances) {
+      foreach ($bundle_instances as $field_name => $instance) {
+        $field = field_info_field($field_name);
 
-    // Iterate the view modes.
-    foreach ($data['display'] as $view_mode_name => $view_mode) {
-      // Proceed only if the current field is linked.
-      if (isset($view_mode['settings']['linked_field']) && $view_mode['settings']['linked_field']['linked']) {
-        // Get some information about the field.
-        $entity_info = entity_get_info($entity_type);
-        $view_mode_path = ($view_mode_name != 'default') ? '/' . $view_mode_name : '';
-        $admin = $entity_info['bundles'][$bundle]['admin']['real path'] . '/display' . $view_mode_path;
-        $view_mode_label = ($view_mode_name != 'default') ? $entity_info['view modes'][$view_mode_name]['label'] : 'Default';
-        $bundle_name = $entity_info['bundles'][$bundle]['label'];
+        // Iterate the view modes.
+        foreach ($instance['display'] as $view_mode_name => $view_mode) {
+          // Proceed only if the current field is linked.
+          if (isset($view_mode['settings']['linked_field']) && $view_mode['settings']['linked_field']['linked']) {
+            // Get some information about the field.
+            $entity_info = entity_get_info($entity_type);
+            $view_mode_path = ($view_mode_name != 'default') ? '/' . $view_mode_name : '';
+            $admin = $entity_info['bundles'][$bundle]['admin']['real path'] . '/display' . $view_mode_path;
+            $view_mode_label = ($view_mode_name != 'default') ? $entity_info['view modes'][$view_mode_name]['label'] : 'Default';
+            $bundle_name = $entity_info['bundles'][$bundle]['label'];
 
-        if (!isset($linked_fields[$field_name][$entity_type]['#label'])) {
-          $linked_fields[$field_name][$entity_type]['#label'] = $entity_info['label'];
+            if (!isset($linked_fields[$field_name][$entity_type]['#label'])) {
+              $linked_fields[$field_name][$entity_type]['#label'] = $entity_info['label'];
+            }
+
+            if (!isset($linked_fields[$field_name][$entity_type][$bundle]['#label'])) {
+              $linked_fields[$field_name][$entity_type][$bundle]['#label'] = $bundle_name;
+            }
+
+            $linked_fields[$field_name][$entity_type][$bundle][$view_mode_name] = array(
+              'admin' => $admin,
+              'view_mode' => $view_mode_label,
+            );
+          }
         }
-
-        if (!isset($linked_fields[$field_name][$entity_type][$bundle]['#label'])) {
-          $linked_fields[$field_name][$entity_type][$bundle]['#label'] = $bundle_name;
-        }
-
-        $linked_fields[$field_name][$entity_type][$bundle][$view_mode_name] = array(
-          'admin' => $admin,
-          'view_mode' => $view_mode_label,
-        );
-
       }
     }
   }
 
-  $header = array(t('Field name'), t('Linked in'));
-  $rows = array();
-
   // Iterate all linked fields and build a table.
   foreach ($linked_fields as $field_name => $entity_types) {
     $rows[$field_name]['data'][0] = check_plain($field_name);
-    $fieldsets = array();
+    $details = array();
 
     // Iterate all entity types.
     foreach ($entity_types as $entity_type => $bundles) {
@@ -82,17 +86,18 @@ function linked_field_field_list() {
         );
       }
 
-      // Add a new fieldst per entity type.
-      $fieldsets[] = array(
-        '#type' => 'fieldset',
-        '#title' => $entity_type_label,
+      // Add a new grouping per entity type.
+      $details[] = array(
+        '#type' => 'details',
+        '#summary' => $entity_type_label,
+        '#open' => TRUE,
         '#children' => theme('item_list', array('items' => $bundle_list)),
         '#attributes' => array('class' => array('collapsible', 'collapsed')),
       );
     }
 
-    drupal_add_library('system', 'drupal.collapse');
-    $rows[$field_name]['data'][1] = drupal_render($fieldsets);
+    backdrop_add_library('system', 'backdrop.collapse');
+    $rows[$field_name]['data'][1] = backdrop_render($details);
   }
 
   // Sort rows by field name.

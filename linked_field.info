@@ -1,5 +1,8 @@
+type = module
 name = Linked Field
 description = Adds the functionality to link fields to a specific destination.
-core = 7.x
+backdrop = 1.x
+package = Fields
 
-dependencies[] = field_formatter_settings
+tags[] = Link
+tags[] = Field
