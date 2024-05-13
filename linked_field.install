@@ -17,31 +17,6 @@ function linked_field_enable() {
 }
 
 /**
- * Implements hook_uninstall().
- *
- * We have to remove Linked Field settings from all fields and views.
- */
-function linked_field_uninstall() {
-  // Getting all fields.
-  $field_info = field_info_fields();
-
-  foreach ($field_info as $field) {
-    foreach ($field['bundles'] as $entity_type => $bundles) {
-      foreach ($bundles as $bundle) {
-        // Getting field instance and modify the settings.
-        $instance_config = config('field.instance.' . $entity_type . '.' . $bundle . '.' . $field['field_name']);
-        $instance_config->clear('display.settings.linked_field');
-        $instance_config->save();
-      }
-    }
-  }
-
-  // Clear caches.
-  field_cache_clear();
-}
-
-
-/**
  * Implements hook_update_last_removed().
  */
 function linked_field_update_last_removed() {
