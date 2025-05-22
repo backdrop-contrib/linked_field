@@ -273,7 +273,7 @@ function linked_field_field_formatter_settings_form_alter(&$settings_form, $cont
  * Implements hook_field_attach_view_alter().
  */
 function linked_field_field_attach_view_alter(&$output, $context) {
-  if ($context['display'] == 'token') {
+  if (is_string($context['display']) && $context['display'] == 'token') {
     // We want to avoid an infinite loop when replacing tokens below.
     return;
   }
