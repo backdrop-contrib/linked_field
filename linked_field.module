@@ -310,7 +310,7 @@ function linked_field_field_attach_view_alter(&$output, $context) {
     $settings = isset($display['settings']) ? $display['settings'] : array();
 
     // We need special behavior for Display Suite fields.
-    if ($element['#field_type'] == 'ds') {
+    if ($element['#field_type'] == 'ds' && module_exists('ds')) {
       $field_settings = ds_get_field_settings($element['#entity_type'], $element['#bundle'], $element['#view_mode']);
       $settings = isset($field_settings[$element['#field_name']]['formatter_settings']) ? $field_settings[$element['#field_name']]['formatter_settings'] : array();
     }
@@ -344,7 +344,7 @@ function linked_field_field_attach_view_alter(&$output, $context) {
           'attributes' => array(
             'title' => $settings['linked_field']['advanced']['title'],
             'target' => $settings['linked_field']['advanced']['target'],
-            'class' => $settings['linked_field']['advanced']['class'],
+            'class' => backdrop_html_class($settings['linked_field']['advanced']['class']),
             'rel' => $settings['linked_field']['advanced']['rel'],
           ),
         ) + $destination_parsed,
